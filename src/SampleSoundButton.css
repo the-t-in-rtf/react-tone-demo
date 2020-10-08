@@ -1,0 +1,22 @@
+.button-text {
+    display: inline-block;
+    font-size: 24px;
+    margin-left: 1em;
+    margin-right: 1em;
+}
+
+button.playing, button.stopped {
+    font-size: 36px;
+}
+
+button.stopped:before, button.stopped:after {
+    content: "🔈";
+}
+
+button.playing {
+    background-color: cornflowerblue;
+}
+
+button.playing:before, button.playing:after {
+    content: "🔊"
+}
