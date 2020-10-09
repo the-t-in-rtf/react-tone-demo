@@ -33,6 +33,8 @@ export default class PanningGridStrument extends Gridstrument {
     }
 
     playNote = () => {
+        // This ensures that the last note stops before we play the next, but can result in a stutter.
+        // TODO: When we convert to using Tone.Player, we should ensure that we have a way to play longer sounds (such as sequences) from a particular point in time.
         this.sampler.releaseAll();
         const noteName    = PanningGridStrument.noteByRow[this.state.cursorRow];
         const middleCol   = (this.props.maxCol + this.props.minCol) / 2;

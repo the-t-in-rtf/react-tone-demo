@@ -7,6 +7,7 @@
 
 button.playing, button.stopped {
     font-size: 36px;
+    margin-bottom: .5em;
 }
 
 button.stopped:before, button.stopped:after {

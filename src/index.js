@@ -11,6 +11,7 @@ import {start} from 'tone';
 
 import GridStrument from './GridStrument';
 import PanningGridStrument from './PanningGridStrument';
+import BoundedPanningGridStrument from './BoundedPanningGridStrument';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -157,18 +158,31 @@ class TonePanel extends React.Component {
 
         <PanningGridStrument samplerURLs= {{ "E2": "analog-lab-robotic-sequence.wav" }} />
 
-        <h2>Suggesting Boundaries Using a Low Pass Filter</h2>
+       <h2>Auditising Boundaries</h2>
 
-        TODO
+       <p>
+         The grid used in the last few examples has boundaries, i.e. cells that are "in bounds" (white) and cells that
+         are "out of bounds" (black).  This section demonstrates strategies for changing the sound to reflect whether
+         (and how far) out of bounds the cursor is.
+        </p>
 
-        <h2>Suggesting Boundaries Using Sound Volume</h2>
+        <h3>Suggesting Boundaries Using Sound Volume</h3>
 
-        TODO
+        <BoundedPanningGridStrument gainCutoffOutOfBounds="0.4"/>
 
-        <h2>Suggesting Boundaries Using Reverb</h2>
+        <h3>Suggesting Boundaries Using Reverb</h3>
+
+        <BoundedPanningGridStrument reverbWetnessOutOfBounds={0.35}/>
 
 
-        <h2>Suggesting Boundaries Using All Three</h2>
+        <h3>Suggesting Boundaries Using a Low Pass Filter</h3>
+
+        <BoundedPanningGridStrument lowpassResonanceOutOfBounds={0.35}/>
+        
+
+        <h3>Suggesting Boundaries Using All Three</h3>
+
+        <BoundedPanningGridStrument gainCutoffOutOfBounds="0.4" reverbWetnessOutOfBounds={0.35} lowpassResonanceOutOfBounds={0.35}/>
       </Container>
     )
   }

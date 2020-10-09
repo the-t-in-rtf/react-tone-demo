@@ -6,6 +6,8 @@ import Col from "react-bootstrap/Col"
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
+import './GridStrument.css';
+
 export const gridstrumentDefaultProps = {
     startRow: 2,
     startCol: 2,
@@ -159,7 +161,7 @@ export default class GridStrument extends React.Component {
         const cursorCx = leftGutterX + (this.props.cellWidth * (this.state.cursorCol - 0.5));
         const cursorCy = topGutterY + (this.props.cellWidth *  (this.state.cursorRow - 0.5));
         
-        return(<Container>
+        return(<Container className="gridstrument">
                 <Row>
                     <Col md="6">
                         <svg width={width} height={height} tabIndex="1" onKeyDown={this.handleKeyDown}>
@@ -192,7 +194,7 @@ export default class GridStrument extends React.Component {
                     </Col>
                     <Col md="6">
                         <div className="alert alert-dark">
-                            Focus on the element, then use arrow keys to change position and space/enter to play the note corresponding to the current position.
+                            Focus on the element, then use arrow keys to change position.   The note corresponding to your position will play as you move.  You can also hit the enter key to repeat the note at the current position.
                         </div>
                     </Col>
                 </Row>
