@@ -1,7 +1,7 @@
 // TODO: Add flow
 import React from 'react';
 
-import {Player} from "tone";
+import {Player, start as StartTone} from "tone";
 
 import './SampleSoundButton.css'
 
@@ -22,8 +22,6 @@ export default class SampleSoundButton extends React.Component {
         this.player.onstop = this.onStop;
         this.player.loop = this.props.loop;
         this.player.toDestination();
-
-        // TODO: Track whether we're loaded yet.
 
         this.state = {
             isLoaded: false,
@@ -65,11 +63,13 @@ export default class SampleSoundButton extends React.Component {
     }
 
     handleClick = (event) => {
+        StartTone();
         event.preventDefault();
         this.toggleSound();
     }
 
     handleKeyDown = (event) => {
+        StartTone();
         if (this.props.watchedKeys.indexOf(event.key) !== -1) {
             event.preventDefault();
             this.toggleSound();

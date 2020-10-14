@@ -1,0 +1,10 @@
+.control-label {
+    margin-bottom: 0.5em;
+}
+
+.value-label {
+    font-weight: bold;
+    text-align: center;
+    width: 100px;
+    margin-top: 0.5em;
+}

@@ -1,9 +1,10 @@
 import Gridstrument from './GridStrument';
 import PanningGridStrument from './PanningGridStrument';
 
-import {Reverb, Gain, LowpassCombFilter} from 'tone';
+import {Reverb, Gain, LowpassCombFilter, Destination} from 'tone';
 
 const boundedPanningGridStrumentDefaults = Object.assign({}, Gridstrument.defaultProps, {
+    // TODO: Reintroduce a note length and make it possible to use a fraction of that to rampTo the next value.
     gainCutoffOutOfBounds: 0,
     reverbDecayOutOfBounds: 0.4,
     reverbWetnessOutOfBounds: 0,
@@ -18,41 +19,35 @@ export default class BoundedPanningGridStrument extends PanningGridStrument {
     constructor (props) {
         super(props);
 
-        this.initialiseBoundaryEffects(props);
+        this.initialiseGain();
+        this.initialiseReverb();
+        this.initialiseLowpass();
+
+        this.effects = [ this.panner, this.gain, this.reverb, this.lowpass, Destination];
+        this.connectEffects();
     }
 
-    initialiseBoundaryEffects = (props) => {
-        this.panner.disconnect();
-        
+
+    initialiseGain = () => {
         // https://tonejs.github.io/docs/14.7.39/interface/GainOptions
         this.gain = new Gain({
             gain: 1
         });
+    }
 
-        this.panner.connect(this.gain);
-        
-        // https://tonejs.github.io/docs/14.7.39/interface/ReverbOptions
+    initialiseReverb = () => {
         this.reverb = new Reverb({
             decay:  this.props.reverbDecayOutOfBounds, 
             wet: 0 // disabled by default.
         });
+    }
 
-        this.gain.connect(this.reverb);
-
-        // https://tonejs.github.io/docs/14.7.39/interface/LowpassCombFilterOptions
+    initialiseLowpass = () => {
         this.lowpass = new LowpassCombFilter({
             dampening: this.props.lowpassDampening,
             delayTime: this.props.lowpassDelayTime,
             resonance: 0
         });
-        
-        this.reverb.connect(this.lowpass);
-        this.lowpass.toDestination();
-
-        // TODO: Add Low Pass Filter, and make sure we can enable/ disable combinations of options.
-        // dampening : Frequency
-        // delayTime : Time
-        // resonance : NormalRange
     }
 
     distanceOutOfBounds = (position, numCells) => {
@@ -66,16 +61,19 @@ export default class BoundedPanningGridStrument extends PanningGridStrument {
     }
 
     playNote = () => {
-        // This ensures that the last note stops before we play the next, but can result in a stutter.
-        // TODO: When we convert to using Tone.Player, we should ensure that we have a way to play longer sounds (such as sequences) from a particular point in time.
-        this.sampler.releaseAll();
         const noteName    = PanningGridStrument.noteByRow[this.state.cursorRow];
+
         const middleCol   = (this.props.maxCol + this.props.minCol) / 2;
         const distance    = (this.state.cursorCol - middleCol);
         const newPanValue = distance/4;
 
-        // TODO: Try setting values immediately instead of ramping the values up and down.
-        this.panner.pan.value = newPanValue;
+
+        if (this.props.rampToDuration > 0) {
+            this.panner.pan.rampTo(newPanValue, this.props.rampToDuration);
+        }
+        else {
+            this.panner.pan.value = newPanValue;
+        }
 
         // Calculate distance out of bounds on both axes and then combine using the square of the sum of the squares (ala pythagoras).
         const colsOutOfBounds = this.distanceOutOfBounds(this.state.cursorCol, this.props.numCols); 
@@ -85,22 +83,38 @@ export default class BoundedPanningGridStrument extends PanningGridStrument {
         // Adjust the reverb based on the distance out of bounds.
         if (this.props.reverbDecayOutOfBounds > 0) {
             const newWetness = Math.min(1, this.props.reverbWetnessOutOfBounds * cellsOutOfBounds);
-            this.reverb.wet.value = newWetness;
+            if (this.props.rampToDuration > 0) {
+                this.reverb.wet.rampTo(newWetness, this.props.rampToDuration);
+            }
+            else {
+                this.reverb.wet.value = newWetness;
+            }
         }
 
         // Adjust the volume based on the distance out of bounds.
         if (this.props.gainCutoffOutOfBounds > 0) {
             const newGain = 1 - (this.props.gainCutoffOutOfBounds * cellsOutOfBounds);
-            this.gain.gain.value = newGain;
+
+            if (this.props.rampToDuration > 0) {
+                this.gain.gain.rampTo(newGain, this.props.rampToDuration);
+            }
+            else {
+                this.gain.gain.value = newGain;
+            }
         }
 
         // Adjust the lowpass resonance based on the distance out of bounds.
         if (this.props.lowpassResonanceOutOfBounds > 0) {
             const newResonance = Math.min(1, (this.props.lowpassResonanceOutOfBounds * cellsOutOfBounds));
-            this.lowpass.resonance.value = newResonance;
+
+            if (this.props.rampToDuration > 0) {
+                this.lowpass.resonance.rampTo(newResonance, this.props.rampToDuration);
+            }
+            else {
+                this.lowpass.resonance.value = newResonance;
+            }
         }
 
-        this.sampler.triggerAttack([noteName + this.props.samplerBaseOctave]);
-    }
-
+        this.playSingleNote(noteName, this.props.samplerBaseOctave);
+   }
 }

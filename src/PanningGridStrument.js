@@ -1,6 +1,6 @@
 import Gridstrument from './GridStrument';
 
-import {Panner} from "tone";
+import {Destination, Panner} from "tone";
 
 export default class PanningGridStrument extends Gridstrument {
     static defaultProps = Gridstrument.defaultProps;
@@ -21,26 +21,30 @@ export default class PanningGridStrument extends Gridstrument {
         super(props);
 
         // Initialize panner.
-        this.initialisePanner(props);
+        this.initialisePanner();
+
+        this.effects = [this.panner, Destination];
+        this.connectEffects();
     }
 
-    initialisePanner = (props) => {
-        this.sampler.disconnect();
+    initialisePanner = () => {
         this.panner = new Panner(0);
-        this.panner.toDestination();
-
-        this.sampler.connect(this.panner);
     }
 
     playNote = () => {
-        // This ensures that the last note stops before we play the next, but can result in a stutter.
-        // TODO: When we convert to using Tone.Player, we should ensure that we have a way to play longer sounds (such as sequences) from a particular point in time.
-        this.sampler.releaseAll();
         const noteName    = PanningGridStrument.noteByRow[this.state.cursorRow];
+
         const middleCol   = (this.props.maxCol + this.props.minCol) / 2;
         const distance    = (this.state.cursorCol - middleCol);
         const newPanValue = distance/4;
-        this.panner.pan.rampTo(newPanValue, this.props.samplerNoteDuration);
-        this.sampler.triggerAttack([noteName + this.props.samplerBaseOctave]);
+
+        if (this.props.rampToDuration > 0) {
+            this.panner.pan.rampTo(newPanValue, this.props.rampToDuration);
+        }
+        else {
+            this.panner.pan.value = newPanValue;
+        }
+
+        this.playSingleNote(noteName, this.props.samplerBaseOctave);
     }
 }

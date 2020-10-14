@@ -1,6 +1,6 @@
 import React from "react";
 
-import {Sampler} from "tone";
+import {Players, Frequency, Midi, Destination, start as StartTone} from "tone";
 
 import Col from "react-bootstrap/Col"
 import Container from "react-bootstrap/Container";
@@ -9,6 +9,7 @@ import Row from "react-bootstrap/Row";
 import './GridStrument.css';
 
 export const gridstrumentDefaultProps = {
+    // Grid Params
     startRow: 2,
     startCol: 2,
     minCol:  -2,
@@ -19,10 +20,16 @@ export const gridstrumentDefaultProps = {
     numRows:  5,
     cellHeight: 30,
     cellWidth: 30,
+
+    // Control Params
     watchedKeys: ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter"],
+
+    // Sound Params
+    useOffsets: false,
+    loop: false,
+    rampToDuration: 0,
     samplerBaseOctave: 2,
     samplerBaseURL: "./sounds/",
-    samplerRelease: 1,
     samplerURLs: {
         "E2": "bongo.wav"
     }
@@ -41,28 +48,56 @@ export default class GridStrument extends React.Component {
         "6":  "A"
     }
 
+    static indexByNote = {
+        "C":  0,
+        "C#": 1,
+        "D":  2,
+        "D#": 3,
+        "E":  4,
+        "F":  5,
+        "F#": 6,
+        "G":  7,
+        "G#": 8,
+        "A":  9,
+        "A#": 10,
+        "B":  11
+    }
+
     static defaultProps = gridstrumentDefaultProps;
     
     constructor (props) {
         super(props);
 
-        // Initialize sound and filters.
-        this.initialiseSampler(props);
-
         this.state = {
             cursorCol: props.startCol,
-            cursorRow: props.startRow
+            cursorRow: props.startRow,
         };
-    }
 
-    initialiseSampler = (props) => {
-        // TODO: The Sampler doesn't allow you to loop sounds, so we'll probably want to write our own wrapper around Tone.Player with scaling for pitch.
-        this.sampler = new Sampler({
-            urls: props.samplerURLs,
-            release: props.samplerRelease,
-            baseUrl: props.samplerBaseURL
+        // Initialize sound and filters.
+        this.initialisePlayers();
+
+        this.effects = [Destination];
+        this.connectEffects();
+    }
+    
+    initialisePlayers = (props) => {
+        this.players = new Players();
+
+        this.playerKeysByPitch = {};
+        Object.keys(this.props.samplerURLs).forEach((key) => {
+            const sampleURL = this.props.samplerBaseURL + this.props.samplerURLs[key];
+            this.players.add(key, sampleURL);
+            const notePitch = Frequency(key).toMidi();
+            this.playerKeysByPitch[notePitch] = key;
         });
-        this.sampler.toDestination();
+    }
+    
+
+    // All of the classes that extend this one update this.effects to represent their desired chain of effects between
+    // this.players and Tone.Destination.
+    connectEffects = () => {
+        this.players.disconnect();
+        this.players.chain.apply(this.players, this.effects);
     }
 
     handleKeyDown = (event) => {
@@ -114,7 +149,12 @@ export default class GridStrument extends React.Component {
                     });
                     break;
                 case "Enter":
-                    this.playNote();
+                    if (this.activePlayer && this.activePlayer.state === "started") {
+                        this.stopPlaying();
+                    }
+                    else {
+                        this.playNote();
+                    }                  
                     break;
                 default:
                     break;
@@ -125,15 +165,93 @@ export default class GridStrument extends React.Component {
     playNote = () => {
         const octave = this.props.samplerBaseOctave + (this.props.numRows - this.state.cursorRow);
         const noteName = GridStrument.noteByColumn[this.state.cursorCol];
+        this.playSingleNote(noteName, octave);
+    }
 
-        this.sampler.releaseAll();
-        this.sampler.triggerAttack([noteName + octave]);
+    stopPlaying = () => {
+        if (this.activePlayer && this.activePlayer.state === "started") {
+            this.activePlayer.stop();
+        }
+    }
+
+    playSingleNote = (noteName, octave) => {
+        let previousNoteOffset = 0;
+
+        if (this.props.useOffsets && this.activePlayer && this.activePlayer.state === "started") {           
+            // We have to calculate the relative position in the sample ourselves because Tone.js no longer exposes that information:
+            // https://github.com/Tonejs/Tone.js/issues/621
+            this.activePlayer.stop();
+            let noteStopped = this.activePlayer.context.now();
+            const sampleLength = this.activePlayer.buffer.duration;
+            const timeElapsed = noteStopped - this.noteStarted;
+            // The offset for the next note will be: (duration % sample length)  ( newPlaybackRate/ oldPlaybackRate ).
+            previousNoteOffset = (timeElapsed % sampleLength) / this.activePlayer.playbackRate;
+        }
+       
+        // The Sampler doesn't allow you to loop sounds, so we use a Players class and handle the pitch shifting ourselves.
+        const desiredNote = noteName + octave;
+
+        // Find our nearest neighbor note.
+        const desiredPitch = Frequency(desiredNote).toMidi();
+
+        let leastDistance = 127;
+        Object.keys(this.playerKeysByPitch).forEach((pitch) => {
+            const distance = pitch - desiredPitch;
+            if (Math.abs(distance) < Math.abs(leastDistance)) {
+                leastDistance = distance;
+            }
+        });
+
+        if (leastDistance !== 127) {
+            const closestPitch = desiredPitch + leastDistance;
+            const key = Midi(closestPitch).toNote();
+
+            // Get the individual Player instance.
+            const notePlayer = this.players.player(key);
+
+            if (notePlayer && notePlayer.start) {
+                this.activePlayer = notePlayer;
+                
+                // Set its loop variable.
+                notePlayer.loop = this.props.loop;
+                
+                // Adjust the speed
+                const adjustmentFactor = Math.pow(2, Math.abs(leastDistance/12));
+                const adjustedSpeed = leastDistance < 0 ? adjustmentFactor : (1 / adjustmentFactor);
+                
+                // TODO: The note player lacks a "rampTo" for its playbackrate, so we can't transition pitches that way.
+                // See if they expose their timing mechanism for arbitrary values.
+                // May not want to do this, as it would mess up our offset algorithm.
+                notePlayer.playbackRate = adjustedSpeed;
+                
+                const scaledOffset = previousNoteOffset * adjustedSpeed
+
+                this.noteStarted = notePlayer.context.now() - scaledOffset;
+                
+                // Play the note.
+                notePlayer.start(0, scaledOffset);
+            }
+        }
     }
 
     componentDidUpdate = (prevProps, prevState) => {
         if (prevState.cursorCol !== this.state.cursorCol || prevState.cursorRow !== this.state.cursorRow) {
             this.playNote();
         }
+
+        if (JSON.stringify(prevProps.samplerURLs) !== JSON.stringify(this.props.samplerURLs)) {
+            this.stopPlaying();
+            this.initialisePlayers(this.props);
+            this.connectEffects();
+        }
+
+        if (prevProps.loop && !this.props.loop) {
+            this.stopPlaying();
+        }
+    }
+
+    getEffectsChain = () => {
+        return [Destination];
     }
 
     drawGrid = (leftGutterX, topGutterY) => {
@@ -161,9 +279,13 @@ export default class GridStrument extends React.Component {
         const cursorCx = leftGutterX + (this.props.cellWidth * (this.state.cursorCol - 0.5));
         const cursorCy = topGutterY + (this.props.cellWidth *  (this.state.cursorRow - 0.5));
         
-        return(<Container className="gridstrument">
+        return(<Container
+                className="gridstrument"
+                onKeyDown={StartTone}
+                onClick={StartTone}
+               >
                 <Row>
-                    <Col md="6">
+                    <Col md="4">
                         <svg width={width} height={height} tabIndex="1" onKeyDown={this.handleKeyDown}>
                             <defs>
                                 <radialGradient id="boundaries">
@@ -192,14 +314,15 @@ export default class GridStrument extends React.Component {
                             />
                         </svg>         
                     </Col>
-                    <Col md="6">
+                    <Col md="4">
                         <div className="alert alert-dark">
-                            Focus on the element, then use arrow keys to change position.   The note corresponding to your position will play as you move.  You can also hit the enter key to repeat the note at the current position.
+                            Focus on the element, then use arrow keys to change position.
+                            The note corresponding to your position will play as you move.
+                            Hit the enter key to stop playing the current note or repeat the note
+                            that corresponds to the current position.
                         </div>
                     </Col>
                 </Row>
             </Container>);
     }
 }
-
-// TODO: Write a component that plays the note with effects depending on whether we're out of bounds.
