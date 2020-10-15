@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Col from "react-bootstrap/Col"
+import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
@@ -8,17 +8,36 @@ import { Toggle, Dial, Select } from 'react-nexusui';
 
 import './ConfigurableGridStrument.css';
 
+import HelpPopover from './HelpPopover';
 import BoundedPanningGridStrument from './BoundedPanningGridStrument'
 
 function roundedNumberAsString (number) {
     return (Math.round(number * 100) / 100).toString();
 }
 
+
+// We need this wrapper because the React NexusUI component strips the className parameter and also lacks any useful class of its own.
+function GridStrumentDial (props) {
+    return (<div className="gridstrument-dial">
+        <Dial
+            size={props.size}
+            interaction={props.interaction}
+            mode={props.mode}
+            min={props.min}
+            max={props.max}
+            step={props.step}
+            value={props.value}
+            onChange={props.onChange}
+            onReady={props.onReady}
+        />
+    </div>);
+}
+
 export default class ConfigurableGridStrument extends React.Component {
     samplerURLsByKey = {
         "Bongo": { "E2": "bongo.wav" },
         "Euro Perc": { "A1": "wavestation-euro-perc-organ.wav"},
-        "Glissando (Down)": { "C3": "glissando/al-metalic-vs-robotic-down.wav"},
+        "Glissando (Down)": { "C2": "glissando/al-metalic-vs-robotic-down.wav"},
         "Glissando (Up)": { "C2": "glissando/al-metalic-vs-robotic-up.wav"},
         "Pencil": {"A1": "pencil-cardboard-shading.wav"},
         "Train": { "C1": "train/C1.wav", "C2": "train/C2.wav", "C3": "train/C3.wav", "C4": "train/C4.wav" }
@@ -80,7 +99,7 @@ export default class ConfigurableGridStrument extends React.Component {
     render () {
         return (<Container>
             <Row>
-                <Col md="12">
+                <Col md="4">
                     <BoundedPanningGridStrument
                         gainCutoffOutOfBounds={this.state.gainCutoffOutOfBounds}
                         loop={this.state.loop}
@@ -90,36 +109,72 @@ export default class ConfigurableGridStrument extends React.Component {
                         useOffsets={this.state.useOffsets}
                     />
                 </Col>
-            </Row>
-            <Row>
-                <Col md="6"></Col>
+                <Col md="1"></Col>
                 <Col md="3">
-                    <h4 className="control-label">Sound Pack</h4>
-                </Col>
-                <Col md="3">
+                    <HelpPopover
+                        title = "Sound Pack"
+                        content = "Select which sounds to use."
+                        block
+                    />
                     <Select
                         options={Object.keys(this.samplerURLsByKey).sort()}
                         selectedIndex={0}
                         onChange={this.setSampleURLs}
                     />
                 </Col>
+                <Col md="1"></Col>
+                <Col md="3">
+                    <Row>
+                        <Col md="6">
+                            <HelpPopover
+                                title = "Loop"
+                                content = "Whether to loop the sample when it finishes playing."
+                            />
+                        </Col>
+                        <Col md="4">
+                            <Toggle
+                                state={this.state.loop}
+                                size={[100,40]}
+                                onChange={this.setLoopParameter}
+                            />
+                        </Col>
+                        <Col md="2">
+                            <div className="value-label">{this.state.loop ? "Yes" : "No"}</div>
+                        </Col>
+                    </Row>
+
+                    <Row>
+                        <Col md="6">
+                            <HelpPopover
+                                title = "Offsets"
+                                content = "When changing notes (such as when moving up or down), start from the position reached in the previous sound rather than starting from the beginning of the sample."
+                            />
+                        </Col>
+
+                        <Col md="4">
+                            <Toggle
+                                state={this.state.useOffsets}
+                                size={[100,40]}
+                                onChange={this.setUseOffsets}
+                            />
+
+                        </Col>
+                        <Col md="2">
+                            <p className="value-label">{this.state.useOffsets ? "Yes" : "No"}</p>
+                        </Col>
+                    </Row>
+                </Col>
             </Row>
             <hr/>
             <Row>
-                <Col md="4">
-                    <h4 className="control-label">Loop Sample?</h4>
-
-                    <Toggle
-                        state={this.state.loop}
-                        size={[100,40]}
-                        onChange={this.setLoopParameter}
+                <Col md="3">
+                    <HelpPopover
+                        title = "Transition Time"
+                        content = "How long (in seconds) to transition effects such as panning when they change.  Set to zero to disable."
                     />
 
-                    <p className="value-label">{this.state.loop ? "Yes" : "No"}</p>
-                </Col>
-                <Col md="4">
-                    <h4 className="control-label">Effect Transition Time (s)</h4>
-                    <Dial
+                    <GridStrumentDial
+                        className="gridstrument-dial"
                         value={this.state.rampToDuration}
                         onChange={this.setRampToDuration}
                         min={0}
@@ -129,23 +184,30 @@ export default class ConfigurableGridStrument extends React.Component {
 
                     <p className="value-label">{roundedNumberAsString(this.state.rampToDuration)}</p>
                 </Col>
-                <Col md="4">
-                    <h4 className="control-label">"Out of Bounds" Gain Cutoff</h4>
- 
-                    <Dial
+                <Col md="3">
+                    <HelpPopover
+                        title = "Gain Cutoff"
+                        content = "How much to lower the volume when out of bounds."
+                    />
+
+                    <GridStrumentDial
+                        className="gridstrument-dial"
                         value={this.state.gainCutoffOutOfBounds}
                         onChange={this.setGainCutoffOutOfBounds}
                         min={0}
                         max={0.4}
-                    />
+                        />
 
                     <p className="value-label">{roundedNumberAsString(this.state.gainCutoffOutOfBounds)}</p>
                 </Col>
-            </Row>
-            <Row>
-                <Col md="4">
-                    <h4 className="control-label">"Out of Bounds" Reverb</h4>
-                    <Dial
+                <Col md="3">
+                    <HelpPopover
+                        title = "Reverb"
+                        content = "How much reverb to apply when out of bounds."
+                    />
+
+                    <GridStrumentDial
+                        className="gridstrument-dial"
                         value={this.state.reverbWetnessOutOfBounds}
                         onChange={this.setReverbWetnessOutOfBounds}
                         min={0}
@@ -154,9 +216,13 @@ export default class ConfigurableGridStrument extends React.Component {
 
                     <p className="value-label">{roundedNumberAsString(this.state.reverbWetnessOutOfBounds)}</p>
                 </Col>
-                <Col md="4">
-                    <h4 className="control-label">"Out of Bounds" Low Pass</h4>
-                    <Dial
+                <Col md="3">
+                    <HelpPopover
+                        title = "Low Pass"
+                        content = "How much of a low pass filter to apply when out of bounds."
+                    />
+
+                    <GridStrumentDial
                         value={this.state.lowpassResonanceOutOfBounds}
                         onChange={this.setLowpassResonanceOutOfBounds}
                         min={0}
@@ -164,18 +230,6 @@ export default class ConfigurableGridStrument extends React.Component {
                     />
 
                     <p className="value-label">{roundedNumberAsString(this.state.lowpassResonanceOutOfBounds)}</p>
-                </Col>
-                <Col md="4">
-                    <h4 className="control-label">Use Offsets</h4>
-
-                    <Toggle
-                        state={this.state.useOffsets}
-                        size={[100,40]}
-                        onChange={this.setUseOffsets}
-                    />
-
-                    <p className="value-label">{this.state.useOffsets ? "Yes" : "No"}</p>
-
                 </Col>
             </Row>
         </Container>);

@@ -6,6 +6,8 @@ import Col from "react-bootstrap/Col"
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
+import HelpPopover from './HelpPopover';
+
 import './GridStrument.css';
 
 export const gridstrumentDefaultProps = {
@@ -222,6 +224,7 @@ export default class GridStrument extends React.Component {
                 // TODO: The note player lacks a "rampTo" for its playbackrate, so we can't transition pitches that way.
                 // See if they expose their timing mechanism for arbitrary values.
                 // May not want to do this, as it would mess up our offset algorithm.
+                debugger;
                 notePlayer.playbackRate = adjustedSpeed;
                 
                 const scaledOffset = previousNoteOffset * adjustedSpeed
@@ -279,13 +282,18 @@ export default class GridStrument extends React.Component {
         const cursorCx = leftGutterX + (this.props.cellWidth * (this.state.cursorCol - 0.5));
         const cursorCy = topGutterY + (this.props.cellWidth *  (this.state.cursorRow - 0.5));
         
+        const helpPopoverStyle = {
+            width: width
+        }
+
         return(<Container
                 className="gridstrument"
                 onKeyDown={StartTone}
                 onClick={StartTone}
                >
                 <Row>
-                    <Col md="4">
+                    <Col md="12">
+
                         <svg width={width} height={height} tabIndex="1" onKeyDown={this.handleKeyDown}>
                             <defs>
                                 <radialGradient id="boundaries">
@@ -314,13 +322,20 @@ export default class GridStrument extends React.Component {
                             />
                         </svg>         
                     </Col>
-                    <Col md="4">
-                        <div className="alert alert-dark">
-                            Focus on the element, then use arrow keys to change position.
-                            The note corresponding to your position will play as you move.
-                            Hit the enter key to stop playing the current note or repeat the note
-                            that corresponds to the current position.
-                        </div>
+                </Row>
+                <Row>
+                    <Col md="12">
+                        <HelpPopover
+                            buttonStyle={helpPopoverStyle}
+                            variant="info"
+                            title="Help"
+                            content = "
+                                Focus on the grid by clicking or tab navigating to it, then use arrow keys to change
+                                position. The note corresponding to your position will play as you move. Hit the enter
+                                key to stop playing the current note or repeat the note that corresponds to the current
+                                position.
+                            "
+                        />
                     </Col>
                 </Row>
             </Container>);

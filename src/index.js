@@ -16,6 +16,8 @@ import BoundedPanningGridStrument from './BoundedPanningGridStrument';
 import "bootstrap/dist/css/bootstrap.min.css";
 import ConfigurableGridStrument from './ConfigurableGridStrument';
 
+import './index.css';
+
 // An enclosing environment that ensures that Tone is started on the first 
 // user input, and that it is only started once.
 
@@ -53,7 +55,9 @@ class TonePanel extends React.Component {
           <a href="https://issues.fluidproject.org/browse/C2LC-234">sonifying the coding environment</a>.
         </p>
 
-        <h2>Starting / Stopping Sounds</h2>
+        <h2>Basic Playback</h2>
+
+        <h3>Starting / Stopping Sounds</h3>
 
         <p>
           The most basic thing we need to do is play an incidental sound.  For this I used the
@@ -82,7 +86,7 @@ class TonePanel extends React.Component {
           toneStartHook={this.toneStartHook}
         />
 
-        <h2>Sound Picker</h2>
+        <h3>Sound Picker</h3>
 
         <p>
           Here is a "picker" that lets you try all of the sample sounds in this directory.  It also demonstrates making key
@@ -93,7 +97,7 @@ class TonePanel extends React.Component {
 
         <SoundPicker toneStarted={this.state.toneStarted} toneStartHook={this.toneStartHook}/>
 
-        <h2>Using a Panned Loop to Suggest Direction</h2>
+        <h2>Using a Panned Loop to Suggest Direction of Movement</h2>
 
         <p>
           Here is a sound loop that is repeatedly "panned" from one ear to the other.  It is timed to match the tempo
@@ -180,12 +184,12 @@ class TonePanel extends React.Component {
         <PanningGridStrument/>
 
         <p>
-          Here's an example with a longer sound.
+          For comparision, here's an example with a longer, non-percussive sound.
         </p>
 
         <PanningGridStrument samplerURLs= {{ "E2": "analog-lab-robotic-sequence.wav" }} />
 
-       <h3>Representing Boundaries</h3>
+       <h2>Representing Boundaries</h2>
 
        <p>
          The grid used in the last few examples has boundaries, i.e. cells that are "in bounds" (white) and cells that
@@ -228,16 +232,16 @@ class TonePanel extends React.Component {
 
         <h3>Suggesting Boundaries Using All Three</h3>
 
-        <p>Here is a demonstration that uses all three strategies at the same time.</p>
+        <p>Here is a demonstration that uses all three strategies (lowering the volume, adding reverb, and applying a low pass filter).</p>
 
         <BoundedPanningGridStrument gainCutoffOutOfBounds="0.4" reverbWetnessOutOfBounds={0.35} lowpassResonanceOutOfBounds={0.35}/>
 
-        <h3>Transitioning Effects More Gradually</h3>
+        <h2>Transitioning Effects More Gradually</h2>
 
         <p>
           Many of the adjustable parameters in various effects offer the ability to transition over time.  For an
-          example, see <a href="https://tonejs.github.io/docs/14.7.39/Gain#gain">the documentation for the gain parameter</a>
-          of the Gain class provided by Tone.js.  Although I found the effect less crisp, for the purposes of discussion
+          example, see <a href="https://tonejs.github.io/docs/14.7.39/Gain#gain">the documentation for the gain parameter</a> of
+          the Gain class provided by Tone.js.  Although I found the effect less crisp, for the purposes of discussion
           I made the transitions configurable.  Here is a demonstration with the transition time set to three quarters
           of a second (slightly shorter than the sample used).
         </p>
@@ -251,7 +255,7 @@ class TonePanel extends React.Component {
           any transition.
         </p>
 
-        <h3>Adding the Ability to "Loop" Sounds</h3>
+        <h2>Adding the Ability to "Loop" Sounds</h2>
 
         <p>
           One of my ideas about our soundscape is that we would use non-repeating sounds for things like bouncing off
@@ -262,9 +266,8 @@ class TonePanel extends React.Component {
         <p>
           Unlike the similar <a href="https://tonejs.github.io/docs/14.7.39/Player">Player</a> class provided by Tone.js,
           The <a href="https://tonejs.github.io/docs/14.7.39/Sampler">Sampler</a> class does
-          not include the option to loop playback.  To work around this, I wrote a wrapper around their
-          <a href="https://tonejs.github.io/docs/14.7.39/Players">Players</a> class that adds the ability to loop the
-          sound. Here is a demonstration that uses a repeated loop (hit enter to stop playback).
+          not include the option to loop playback.  To work around this, I wrote a wrapper around their <a href="https://tonejs.github.io/docs/14.7.39/Players">Players</a> class
+          that adds the ability to loop the sound. Here is a demonstration that uses a repeated loop (hit enter to stop playback).
         </p>
 
         <BoundedPanningGridStrument
@@ -275,7 +278,7 @@ class TonePanel extends React.Component {
           samplerURLs= {{ "C2": "glissando/al-metalic-vs-robotic-up.wav"}}
         />
 
-        <h3>Smoothing Transitions Between Pitched Sounds</h3>
+        <h2>Smoothing Transitions Between Pitched Sounds</h2>
 
         <p>
           If you transition quickly from one cell to the next in the previous demo, you may notice that the sound
