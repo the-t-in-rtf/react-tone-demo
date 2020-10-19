@@ -2,7 +2,7 @@
   "name": "react-tone-demo",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://the-t-in-rtf.github.io/react-tone-demo",
+  "homepage": ".",
   "dependencies": {
     "@testing-library/jest-dom": "4.2.4",
     "@testing-library/react": "9.5.0",

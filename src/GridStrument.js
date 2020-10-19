@@ -30,6 +30,7 @@ export const gridstrumentDefaultProps = {
     useOffsets: false,
     loop: false,
     rampToDuration: 0,
+    panPerColumn: 0.25,
     samplerBaseOctave: 2,
     samplerBaseURL: "./sounds/",
     samplerURLs: {
@@ -221,10 +222,19 @@ export default class GridStrument extends React.Component {
                 const adjustmentFactor = Math.pow(2, Math.abs(leastDistance/12));
                 const adjustedSpeed = leastDistance < 0 ? adjustmentFactor : (1 / adjustmentFactor);
                 
-                // TODO: The note player lacks a "rampTo" for its playbackrate, so we can't transition pitches that way.
-                // See if they expose their timing mechanism for arbitrary values.
-                // May not want to do this, as it would mess up our offset algorithm.
-                debugger;
+                // NOTE: The note player lacks a "rampTo" for its playbackrate, so we can't transition pitches that way.
+                // It seems as though Tone.js caters to the least common denominator, which is Safari.  Safari appears to
+                // have incorrectly implemented part of the API, in that it defines playbackRate as a hard value rather
+                // than a modulatable signal.  Here is an example in raw WebAudio API calls that does what we want to do
+                // but fails in Safari:
+                // 
+                // https://mdn.github.io/webaudio-examples/decode-audio-data/
+                // 
+                // Other pages suggest that iOS 7 only allows changes when media is paused.  To work around both, it may
+                // be possible to change if we can pause and resume playback, which I believe is the approach used here:
+                //
+                // http://hyperaud.io/lab/pbr-test/
+                //
                 notePlayer.playbackRate = adjustedSpeed;
                 
                 const scaledOffset = previousNoteOffset * adjustedSpeed

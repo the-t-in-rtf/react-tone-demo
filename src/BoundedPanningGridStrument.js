@@ -65,7 +65,9 @@ export default class BoundedPanningGridStrument extends PanningGridStrument {
 
         const middleCol   = (this.props.maxCol + this.props.minCol) / 2;
         const distance    = (this.state.cursorCol - middleCol);
-        const newPanValue = distance/4;
+
+        // TODO: Refactor to make effects control consistent across derived grades without having to copy/paste.
+        const newPanValue = distance * this.props.panPerColumn;
 
 
         if (this.props.rampToDuration > 0) {

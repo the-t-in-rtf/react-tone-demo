@@ -43,8 +43,10 @@ export default class ConfigurableGridStrument extends React.Component {
         "Train": { "C1": "train/C1.wav", "C2": "train/C2.wav", "C3": "train/C3.wav", "C4": "train/C4.wav" }
     }
 
+    // TODO: Inherit this or otherwise reuse from a base grade.
     static defaultProps = {
         loop: false,
+        panPerColumn: 0.25,
         rampToDuration: 0,
         gainCutoffOutOfBounds: 0.4,
         reverbWetnessOutOfBounds: 0.35,
@@ -62,11 +64,13 @@ export default class ConfigurableGridStrument extends React.Component {
             rampToDuration: this.props.rampToDuration,
             reverbWetnessOutOfBounds: this.props.reverbWetnessOutOfBounds,
             samplerURLs: this.props.samplerURLs,
-            useOffsets: this.props.useOffsets
+            useOffsets: this.props.useOffsets,
+            panPerColumn: this.props.panPerColumn
         };
     }
 
     // IMO it's pretty despicable not to make the components properly relay state without these kinds of handlers.
+    // TODO: Come up with a cleaner pattern for this.
     setLoopParameter = (newLoopValue) => {
         this.setState({ loop: newLoopValue });
     }
@@ -96,6 +100,10 @@ export default class ConfigurableGridStrument extends React.Component {
         this.setState({ useOffsets: newUseOffsets});
     }
 
+    setPanPerColumn = (newPanPerColumn) => {
+        this.setState({ panPerColumn: newPanPerColumn});
+    }
+
     render () {
         return (<Container>
             <Row>
@@ -107,6 +115,7 @@ export default class ConfigurableGridStrument extends React.Component {
                         reverbWetnessOutOfBounds={this.state.reverbWetnessOutOfBounds}
                         samplerURLs={this.state.samplerURLs}
                         useOffsets={this.state.useOffsets}
+                        panPerColumn={this.state.panPerColumn}
                     />
                 </Col>
                 <Col md="1"></Col>
@@ -231,6 +240,23 @@ export default class ConfigurableGridStrument extends React.Component {
 
                     <p className="value-label">{roundedNumberAsString(this.state.lowpassResonanceOutOfBounds)}</p>
                 </Col>
+            </Row>
+            <Row>
+            <Col md="3">
+                    <HelpPopover
+                        title = "Pan Levels"
+                        content = "How hard to pan the sound to left and right.  Multiplied by the distance from the centre cell to calculate the panning (-1 for hard left, 0 for centre, 1 for hard right)."
+                    />
+
+                    <GridStrumentDial
+                        value={this.state.panPerColumn}
+                        onChange={this.setPanPerColumn}
+                        min={0}
+                        max={0.25}
+                    />
+
+                    <p className="value-label">{roundedNumberAsString(this.state.panPerColumn)}</p>
+                </Col>                
             </Row>
         </Container>);
     }
