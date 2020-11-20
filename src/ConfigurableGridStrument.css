@@ -1,0 +1,16 @@
+.control-label {
+    margin-bottom: 0.5em;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+.value-label {
+    text-align: center;
+    font-weight: bold;
+    width: 100px;
+    margin-top: 0.5em;
+}
+
+.gridstrument-dial {
+    margin-left: 0.8em;
+}

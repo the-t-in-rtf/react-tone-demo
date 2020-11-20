@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "React + Tone.js Demo",
+  "name": "Demonstration of approaches to sound using React and Tone.js.",
   "icons": [
     {
       "src": "favicon.ico",
